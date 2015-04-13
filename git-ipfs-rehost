@@ -20,8 +20,7 @@ repo=$dir/tohost/$name
 echo rehosting $1
 git clone --bare $1 $repo
 
-if [ -f /objects/pack/*.pack ]; then
-	echo "doing this!"
+if ls $repo/objects/pack/*.pack 1> /dev/null 2>&1; then
 	cd $repo && cp objects/pack/*.pack . && \
 		git unpack-objects < ./*.pack && \
 		rm ./*.pack
