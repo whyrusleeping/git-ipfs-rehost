@@ -20,15 +20,19 @@ repo=$dir/tohost/$name
 echo rehosting $1
 git clone --bare $1 $repo
 
-cd $repo && cp objects/pack/*.pack . && \
-	git unpack-objects < ./*.pack && \
-	rm ./*.pack
+if [ -f /objects/pack/*.pack ]; then
+	echo "doing this!"
+	cd $repo && cp objects/pack/*.pack . && \
+		git unpack-objects < ./*.pack && \
+		rm ./*.pack
+fi
 
 cd $repo && git update-server-info
 
 hash=`ipfs add -q -r $tohost | tail -n1`
-echo "done\n"
+echo "done"
+echo
 echo repo rehosted at http://gateway.ipfs.io/ipfs/$hash/$name
 echo you can clone it with:
-echo ""
+echo 
 echo "  git clone http://gateway.ipfs.io/ipfs/$hash/$name"
