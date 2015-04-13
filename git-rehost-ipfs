@@ -9,7 +9,7 @@ if [ "$#" -eq 0 ]; then
 fi
 
 name=`basename $1`
-if [ "$#" -gt 0 ]; then
+if [ "$#" -gt 1 ]; then
   name_tmp=($2);
   name=${name_tmp[0]} # avoid users tricky things.
 fi
