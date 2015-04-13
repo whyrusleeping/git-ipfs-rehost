@@ -1,6 +1,6 @@
 #!/bin/sh
-# usage: git-ipfs-rehost <git-repo> [name]
-# git-ipfs-rehost - rehost a git repo on ipfs
+# usage: git-rehost-ipfs <git-repo> [name]
+# git-rehost-ipfs - rehost a git repo on ipfs
 
 if [ "$#" -eq 0 ]; then
   echo "usage: $0 <git-repo> [<name>]"
@@ -14,7 +14,7 @@ if [ "$#" -gt 0 ]; then
   name=${name_tmp[0]} # avoid users tricky things.
 fi
 
-dir=`mktemp -d -t ipfsgit`
+dir=`mktemp -d -t git-ipfs-rehost-XXXXXX`
 tohost=$dir/tohost
 repo=$dir/tohost/$name
 echo rehosting $1
