@@ -3,9 +3,9 @@
 # git-rehost-ipfs - rehost a git repo on ipfs
 
 if [ "$#" -eq 0 ] || [ "$#" -gt 2 ]; then
-  echo "usage: $0 <git-repo> [<name>]"
-  echo "rehost <git-repo> on ipfs"
-  exit 1
+	echo "usage: $0 <git-repo> [<name>]"
+	echo "rehost <git-repo> on ipfs"
+	exit 1
 fi
 
 name=$(basename "$1")
