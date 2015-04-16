@@ -8,11 +8,8 @@ if [ "$#" -eq 0 ] || [ "$#" -gt 2 ]; then
   exit 1
 fi
 
-name=$(basename $1)
-if [ "$#" -gt 1 ]; then
-  name_tmp=($2);
-  name=${name_tmp[0]} # avoid users tricky things.
-fi
+name=$(basename "$1")
+[ -n "$2" ] && name="$2"
 
 dir=$(mktemp -d -t git-ipfs-rehost-XXXXXX)
 tohost=$dir/tohost
