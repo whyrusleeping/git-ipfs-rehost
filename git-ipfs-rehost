@@ -10,16 +10,17 @@ die() {
 
 [ "$#" -gt 0 ] && [ "$#" -lt 3 ] || die "$USAGE"
 
-name=$(basename "$1")
+url="$1"
+name=$(basename "$url")
 [ -n "$2" ] && name="$2"
 
 dir=$(mktemp -d -t git-ipfs-rehost-XXXXXX)
 tohost="$dir/tohost"
 repo="$dir/tohost/$name"
 
-echo "Rehosting $1"
+echo "Rehosting $url"
 
-git clone --bare "$1" "$repo" || die "Could not clone '$1'"
+git clone --bare "$url" "$repo" || die "Could not clone '$url'"
 
 cd "$repo" || die "Could not cd into '$repo'"
 
