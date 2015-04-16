@@ -14,16 +14,19 @@ name=$(basename "$1")
 dir=$(mktemp -d -t git-ipfs-rehost-XXXXXX)
 tohost="$dir/tohost"
 repo="$dir/tohost/$name"
-echo "rehosting $1"
+
+echo "Rehosting $1"
 git clone --bare "$1" "$repo"
 
+cd "$repo"
+
 if ls "$repo/objects/pack/"*.pack 1> /dev/null 2>&1; then
-	cd "$repo" && cp objects/pack/*.pack . && \
+	cp objects/pack/*.pack . && \
 		git unpack-objects < ./*.pack && \
 		rm ./*.pack
 fi
 
-cd "$repo" && git update-server-info
+git update-server-info
 
 hash=$(ipfs add -q -r "$tohost" | tail -n1)
 echo "done"
