@@ -19,9 +19,9 @@ repo="$dir/tohost/$name"
 
 echo "Rehosting $1"
 
-git clone --bare "$1" "$repo"
+git clone --bare "$1" "$repo" || die "Could not clone '$1'"
 
-cd "$repo"
+cd "$repo" || die "Could not cd into '$repo'"
 
 if ls "$repo/objects/pack/"*.pack 1> /dev/null 2>&1; then
 	cp objects/pack/*.pack . && \
@@ -29,7 +29,7 @@ if ls "$repo/objects/pack/"*.pack 1> /dev/null 2>&1; then
 		rm ./*.pack
 fi
 
-git update-server-info
+git update-server-info || die "Could not update-server-info"
 
 hash=$(ipfs add -q -r "$tohost" | tail -n1)
 echo "done"
