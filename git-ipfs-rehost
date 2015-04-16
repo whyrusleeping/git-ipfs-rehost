@@ -8,13 +8,13 @@ if [ "$#" -eq 0 ] || [ "$#" -gt 2 ]; then
   exit 1
 fi
 
-name=`basename $1`
+name=$(basename $1)
 if [ "$#" -gt 1 ]; then
   name_tmp=($2);
   name=${name_tmp[0]} # avoid users tricky things.
 fi
 
-dir=`mktemp -d -t git-ipfs-rehost-XXXXXX`
+dir=$(mktemp -d -t git-ipfs-rehost-XXXXXX)
 tohost=$dir/tohost
 repo=$dir/tohost/$name
 echo rehosting $1
@@ -28,7 +28,7 @@ fi
 
 cd $repo && git update-server-info
 
-hash=`ipfs add -q -r $tohost | tail -n1`
+hash=$(ipfs add -q -r $tohost | tail -n1)
 echo "done"
 echo
 echo repo rehosted at http://gateway.ipfs.io/ipfs/$hash/$name
