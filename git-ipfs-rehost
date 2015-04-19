@@ -25,9 +25,9 @@ git clone --bare "$url" "$repo" || die "Could not clone '$url'"
 cd "$repo" || die "Could not cd into '$repo'"
 
 if ls "$repo/objects/pack/"*.pack 1> /dev/null 2>&1; then
-	cp objects/pack/*.pack . && \
-		git unpack-objects < ./*.pack && \
-		rm ./*.pack
+	mv objects/pack/*.pack . || die "Could not move packs"
+	git unpack-objects < ./*.pack || die "Could not unpack packs"
+	rm ./*.pack || die "Could not remove packs"
 fi
 
 git update-server-info || die "Could not update-server-info"
