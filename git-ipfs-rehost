@@ -30,6 +30,7 @@ if ls objects/pack/*.pack >/dev/null 2>&1; then
 	# after "<", so "git unpack-objects < *.pack" doesn't work.
 	cat *.pack | git unpack-objects || die "Could not unpack packs"
 	rm -f *.pack || die "Could not remove packs"
+	rm -f objects/pack/*.idx || die "Could not remove pack indexes"
 fi
 
 git update-server-info || die "Could not update-server-info"
