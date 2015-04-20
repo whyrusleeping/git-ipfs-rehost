@@ -8,6 +8,8 @@ die() {
 	exit 1
 }
 
+UNPACK=1
+
 [ "$#" -gt 0 ] && [ "$#" -lt 3 ] || die "$USAGE"
 
 url="$1"
@@ -24,13 +26,20 @@ git clone --bare "$url" "$repo" || die "Could not clone '$url'"
 
 cd "$repo" || die "Could not cd into '$repo'"
 
-if ls objects/pack/*.pack >/dev/null 2>&1; then
-	mv objects/pack/*.pack . || die "Could not move packs"
-	# Unfortunately some shells like dash don't perform globing
-	# after "<", so "git unpack-objects < *.pack" doesn't work.
-	cat *.pack | git unpack-objects || die "Could not unpack packs"
-	rm -f *.pack || die "Could not remove packs"
-	rm -f objects/pack/*.idx || die "Could not remove pack indexes"
+if [ "$UNPACK" = 1 ]
+then
+	if ls objects/pack/*.pack >/dev/null 2>&1
+	then
+		mv objects/pack/*.pack . || die "Could not move packs"
+		# Unfortunately some shells like dash don't perform globing
+		# after "<", so "git unpack-objects < *.pack" doesn't work.
+		cat *.pack | git unpack-objects || die "Could not unpack packs"
+		rm -f *.pack || die "Could not remove packs"
+		rm -f objects/pack/*.idx || die "Could not remove pack indexes"
+	fi
+else
+	# This should pack and remove unwanted and uneeded objects
+	git gc || die "Could not garbage collect"
 fi
 
 git update-server-info || die "Could not update-server-info"
