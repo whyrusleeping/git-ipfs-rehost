@@ -1,20 +1,49 @@
 #!/bin/sh
 # git-rehost-ipfs - rehost a git repo on ipfs
 
-USAGE="usage: $0 <git-repo> [<name>]"
+USAGE="usage: $0 [--unpack] <git-repo> [<name>]"
 
 die() {
 	echo >&2 "$@"
 	exit 1
 }
 
-UNPACK=1
+UNPACK=
+url=
+name=
 
-[ "$#" -gt 0 ] && [ "$#" -lt 3 ] || die "$USAGE"
+[ "$#" -gt 0 ] || die "Not enough arguments\n$USAGE"
 
-url="$1"
-name=$(basename "$url")
-[ -n "$2" ] && name="$2"
+while [ "$#" -gt 0 ]
+do
+	case $1 in
+	--unpack)
+		UNPACK=1
+		shift
+		;;
+	--*)
+		die "Unknown option $1\n$USAGE"
+		;;
+	*)
+		if [ -z "$url" ]
+		then
+			url="$1"
+			shift
+		else
+			if [ -z "$name" ]
+			then
+				name="$1"
+				shift
+			else
+				die "Too many arguments ($1)\n$USAGE"
+			fi
+		fi
+		;;
+	esac
+done
+
+[ -n "$url" ] || die "Not enough or bad arguments\n$USAGE"
+[ -n "$name" ] || name=$(basename "$url")
 
 dir=$(mktemp -d -t git-ipfs-rehost-XXXXXX)
 tohost="$dir/tohost"
