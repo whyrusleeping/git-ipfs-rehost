@@ -1,18 +1,49 @@
 #!/bin/sh
 # git-rehost-ipfs - rehost a git repo on ipfs
 
-USAGE="usage: $0 <git-repo> [<name>]"
+USAGE="usage: $0 [--unpack] <git-repo> [<name>]"
 
 die() {
 	echo >&2 "$@"
 	exit 1
 }
 
-[ "$#" -gt 0 ] && [ "$#" -lt 3 ] || die "$USAGE"
+UNPACK=
+url=
+name=
 
-url="$1"
-name=$(basename "$url")
-[ -n "$2" ] && name="$2"
+[ "$#" -gt 0 ] || die "Not enough arguments\n$USAGE"
+
+while [ "$#" -gt 0 ]
+do
+	case $1 in
+	--unpack)
+		UNPACK=1
+		shift
+		;;
+	--*)
+		die "Unknown option $1\n$USAGE"
+		;;
+	*)
+		if [ -z "$url" ]
+		then
+			url="$1"
+			shift
+		else
+			if [ -z "$name" ]
+			then
+				name="$1"
+				shift
+			else
+				die "Too many arguments ($1)\n$USAGE"
+			fi
+		fi
+		;;
+	esac
+done
+
+[ -n "$url" ] || die "Not enough or bad arguments\n$USAGE"
+[ -n "$name" ] || name=$(basename "$url")
 
 dir=$(mktemp -d -t git-ipfs-rehost-XXXXXX)
 tohost="$dir/tohost"
@@ -24,10 +55,20 @@ git clone --bare "$url" "$repo" || die "Could not clone '$url'"
 
 cd "$repo" || die "Could not cd into '$repo'"
 
-if ls "$repo/objects/pack/"*.pack 1> /dev/null 2>&1; then
-	cp objects/pack/*.pack . && \
-		git unpack-objects < ./*.pack && \
-		rm ./*.pack
+if [ "$UNPACK" = 1 ]
+then
+	if ls objects/pack/*.pack >/dev/null 2>&1
+	then
+		mv objects/pack/*.pack . || die "Could not move packs"
+		# Unfortunately some shells like dash don't perform globing
+		# after "<", so "git unpack-objects < *.pack" doesn't work.
+		cat *.pack | git unpack-objects || die "Could not unpack packs"
+		rm -f *.pack || die "Could not remove packs"
+		rm -f objects/pack/*.idx || die "Could not remove pack indexes"
+	fi
+else
+	# This should pack and remove unwanted and uneeded objects
+	git gc || die "Could not garbage collect"
 fi
 
 git update-server-info || die "Could not update-server-info"
