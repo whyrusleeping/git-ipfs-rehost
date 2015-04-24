@@ -82,7 +82,9 @@ fi
 
 git update-server-info || die "Could not update-server-info"
 
-hash=$(ipfs add -q -r "$tohost" | tail -n1)
+ipfs add -q -r "$tohost" >"$tohost/add_$name.log" || die "Could not add '$tohost'"
+hash=$(tail -n1 "$tohost/add_$name.log")
+
 echo "done"
 echo
 echo "repo rehosted at http://gateway.ipfs.io/ipfs/$hash/$name"
