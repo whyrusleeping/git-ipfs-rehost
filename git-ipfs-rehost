@@ -49,7 +49,9 @@ dir=$(mktemp -d -t git-ipfs-rehost-XXXXXX)
 tohost="$dir/tohost"
 repo="$dir/tohost/$name"
 
-echo "Rehosting $url"
+echo
+echo "Rehosting: $url"
+echo
 
 git clone --bare "$url" "$repo" || die "Could not clone '$url'"
 
@@ -59,6 +61,7 @@ if [ "$UNPACK" = 1 ]
 then
 	if ls objects/pack/*.pack >/dev/null 2>&1
 	then
+		echo "Unpacking..."
 		mv objects/pack/*.pack . || die "Could not move packs"
 
 		# Unfortunately some shells like dash don't perform globing
@@ -69,6 +72,7 @@ then
 		rm -f objects/pack/*.idx || die "Could not remove pack indexes"
 	fi
 else
+	echo "Packing..."
 	# This should pack and remove unwanted and unneeded objects
 	git gc || die "Could not garbage collect"
 
@@ -80,14 +84,20 @@ else
 	done
 fi
 
+echo "Updating server info..."
 git update-server-info || die "Could not update-server-info"
 
+echo "Adding to IPFS..."
 ipfs add -q -r "$tohost" >"$tohost/add_$name.log" || die "Could not add '$tohost'"
 hash=$(tail -n1 "$tohost/add_$name.log")
 
-echo "done"
+echo "done."
 echo
-echo "repo rehosted at http://gateway.ipfs.io/ipfs/$hash/$name"
-echo "you can clone it with:"
-echo 
+echo "Repo rehosted at:"
+echo
+echo "  http://gateway.ipfs.io/ipfs/$hash/$name"
+echo
+echo "You can clone it with:"
+echo
 echo "  git clone http://gateway.ipfs.io/ipfs/$hash/$name"
+echo
