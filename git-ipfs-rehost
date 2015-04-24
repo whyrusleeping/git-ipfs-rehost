@@ -60,15 +60,24 @@ then
 	if ls objects/pack/*.pack >/dev/null 2>&1
 	then
 		mv objects/pack/*.pack . || die "Could not move packs"
+
 		# Unfortunately some shells like dash don't perform globing
 		# after "<", so "git unpack-objects < *.pack" doesn't work.
 		cat *.pack | git unpack-objects || die "Could not unpack packs"
+
 		rm -f *.pack || die "Could not remove packs"
 		rm -f objects/pack/*.idx || die "Could not remove pack indexes"
 	fi
 else
-	# This should pack and remove unwanted and uneeded objects
+	# This should pack and remove unwanted and unneeded objects
 	git gc || die "Could not garbage collect"
+
+	# Create .keep files so that the .pack will be kept
+	for pack in objects/pack/*.pack
+	do
+		keep=$(echo "$pack" | sed -e 's/\.pack$/.keep/')
+		touch "$keep"
+	done
 fi
 
 git update-server-info || die "Could not update-server-info"
