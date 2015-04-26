@@ -1,7 +1,7 @@
 #!/bin/sh
 # git-rehost-ipfs - rehost a git repo on ipfs
 
-USAGE="usage: $0 [--unpack] <git-repo> [<name>]"
+USAGE="usage: $0 [--unpack] [--existing <ipfs-url>] <git-repo> [<name>]"
 
 die() {
 	echo >&2 "$@"
@@ -9,6 +9,7 @@ die() {
 }
 
 UNPACK=
+EXISTING=
 url=
 name=
 
@@ -19,6 +20,12 @@ do
 	case $1 in
 	--unpack)
 		UNPACK=1
+		shift
+		;;
+	--existing)
+		shift
+		EXISTING="$1"
+		[ -n "$EXISTING" ] || die "Invalid --existing argument\n$USAGE"
 		shift
 		;;
 	--*)
@@ -49,34 +56,89 @@ dir=$(mktemp -d -t git-ipfs-rehost-XXXXXX)
 tohost="$dir/tohost"
 repo="$dir/tohost/$name"
 
-echo "Rehosting $url"
+echo
+echo "Rehosting: $url"
+echo
 
 git clone --bare "$url" "$repo" || die "Could not clone '$url'"
 
 cd "$repo" || die "Could not cd into '$repo'"
 
+if [ -n "$EXISTING" ]
+then
+	case "$EXISTING" in
+	/ipfs/*)
+		# Ok
+		;;
+	*)
+		die "Bad --existing argument '$EXISTING'\n" \
+		    "It should start with '/ipfs/'"
+		;;
+	esac
+	echo "Getting packs from $EXISTING..."
+	ipfs ls "$EXISTING/objects/pack" >"$tohost/ls_existing_$name.log" ||
+		die "Could not ipfs ls '$EXISTING/objects/pack'"
+	while read phash psize pname
+	do
+		case "$pname" in
+		*\.pack)
+			# We use </dev/null to avoid problems because stdin is opened,
+			# as we are reading from a file in the enclosing while loop.
+			ipfs cat "$EXISTING/objects/pack/$pname" >"objects/pack/$pname" </dev/null ||
+				die "Could not ipfs cat '$EXISTING/objects/pack/$pname'"
+			pidx=$(echo "$pname" | sed -e 's/\.pack$/.idx/')
+			ipfs cat "$EXISTING/objects/pack/$pidx" >"objects/pack/$pidx" </dev/null ||
+				die "Could not ipfs cat '$EXISTING/objects/pack/$pidx'"
+			pkeep=$(echo "$pname" | sed -e 's/\.pack$/.keep/')
+			touch "objects/pack/$pkeep"
+			;;
+		*)
+			;;
+		esac
+	done <"$tohost/ls_existing_$name.log"
+fi
+
 if [ "$UNPACK" = 1 ]
 then
 	if ls objects/pack/*.pack >/dev/null 2>&1
 	then
+		echo "Unpacking..."
 		mv objects/pack/*.pack . || die "Could not move packs"
+
 		# Unfortunately some shells like dash don't perform globing
 		# after "<", so "git unpack-objects < *.pack" doesn't work.
 		cat *.pack | git unpack-objects || die "Could not unpack packs"
+
 		rm -f *.pack || die "Could not remove packs"
 		rm -f objects/pack/*.idx || die "Could not remove pack indexes"
 	fi
 else
-	# This should pack and remove unwanted and uneeded objects
+	echo "Packing..."
+	# This should pack and remove unwanted and unneeded objects
 	git gc || die "Could not garbage collect"
+
+	# Create .keep files so that the .pack files will be kept
+	for pack in objects/pack/*.pack
+	do
+		keep=$(echo "$pack" | sed -e 's/\.pack$/.keep/')
+		touch "$keep"
+	done
 fi
 
+echo "Updating server info..."
 git update-server-info || die "Could not update-server-info"
 
-hash=$(ipfs add -q -r "$tohost" | tail -n1)
-echo "done"
+echo "Adding to IPFS..."
+ipfs add -q -r "$tohost" >"$tohost/add_$name.log" || die "Could not add '$tohost'"
+hash=$(tail -n1 "$tohost/add_$name.log")
+
+echo "done."
 echo
-echo "repo rehosted at http://gateway.ipfs.io/ipfs/$hash/$name"
-echo "you can clone it with:"
-echo 
+echo "Repo rehosted at:"
+echo
+echo "  http://gateway.ipfs.io/ipfs/$hash/$name"
+echo
+echo "You can clone it with:"
+echo
 echo "  git clone http://gateway.ipfs.io/ipfs/$hash/$name"
+echo
