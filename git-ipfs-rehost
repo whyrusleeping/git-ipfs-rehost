@@ -136,9 +136,9 @@ echo "done."
 echo
 echo "Repo rehosted at:"
 echo
-echo "  http://gateway.ipfs.io/ipfs/$hash/$name"
+echo "  https://ipfs.io/ipfs/$hash/$name"
 echo
 echo "You can clone it with:"
 echo
-echo "  git clone http://gateway.ipfs.io/ipfs/$hash/$name"
+echo "  git clone https://ipfs.io/ipfs/$hash/$name"
 echo
