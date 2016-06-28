@@ -1,3 +1,5 @@
 
 install:
-	cp git-rehost-ipfs /usr/local/bin/git-rehost-ipfs
+	cp git-ipfs-rehost /usr/local/bin/git-ipfs-rehost
+uninstall:
+	rm /usr/local/bin/git-ipfs-rehost
