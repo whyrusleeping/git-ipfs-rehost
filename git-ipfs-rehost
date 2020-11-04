@@ -44,6 +44,12 @@ do
 		shift
 		QUIET=1
 		;;
+	-k|--key)
+		shift
+		KEY="$1"
+		[ -n "$KEY" ] || die "Invalid --key argument\n$USAGE"
+		shift
+		;;
 	--*)
 		die "Unknown option $1\n$USAGE"
 		;;
@@ -148,17 +154,39 @@ print "Adding to IPFS..."
 ipfs add -q -r "$tohost" >"$tohost/add_$name.log" || die "Could not add '$tohost'"
 hash=$(tail -n1 "$tohost/add_$name.log")
 
+if [ ! -z "$KEY" ]; then
+	print "Publishing to IPNS with key $KEY..."
+
+	ipfs name publish -Q --key="$KEY" "/ipfs/$hash" > "$tohost/ipns_publish.log" || die "Could not publlish ipns name to key $KEY"
+	ipns=$(tail -n1 "$tohost/ipns_publish.log")
+fi
+
 print "done."
 print
 print "Repo rehosted at:"
 print
 print "  https://ipfs.io/ipfs/$hash/$name"
+if [ ! -z "$KEY" ]; then
+print "  https://ipfs.io/ipns/$ipns/$name"
+fi
 print
 print "You can clone it with:"
 print
 print "  git clone https://ipfs.io/ipfs/$hash/$name"
+if [ ! -z "$KEY" ]; then
+print
+print "OR"
+print
+print "  git clone https://ipfs.io/ipns/$ipns/$name"
+fi
 print
 
+
+
 if [ ! -z "$QUIET" ]; then
-	echo "$hash"
+	if [ ! -z "$KEY" ]; then
+		echo "/ipns/$ipns"
+	else
+		echo "$hash"
+	fi
 fi
