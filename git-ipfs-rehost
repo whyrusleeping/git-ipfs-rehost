@@ -24,6 +24,9 @@ UNPACK=
 EXISTING=
 url=
 name=
+QUIET=
+KEY=
+ipns=
 
 [ "$#" -gt 0 ] || die "Not enough arguments\n$USAGE"
 
