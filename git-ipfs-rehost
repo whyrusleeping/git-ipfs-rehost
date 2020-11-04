@@ -1,7 +1,7 @@
 #!/bin/sh
 # git-rehost-ipfs - rehost a git repo on ipfs
 
-USAGE="usage: $0 [--unpack] [--existing <ipfs-url>] <git-repo> [<name>]"
+USAGE="usage: $0 [--unpack] [--existing <ipfs-url>] [-q/--quiet] [-k/--key] <git-repo> [<name>]"
 
 die() {
 	echo >&2 "$@"
