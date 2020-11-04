@@ -8,6 +8,18 @@ die() {
 	exit 1
 }
 
+print() {
+	if [ -z "$QUIET" ]; then
+		echo "$@"
+	fi
+}
+
+quiet() {
+	if [ ! -z "$QUIET" ]; then
+		echo "-q"
+	fi
+}
+
 UNPACK=
 EXISTING=
 url=
@@ -27,6 +39,10 @@ do
 		EXISTING="$1"
 		[ -n "$EXISTING" ] || die "Invalid --existing argument\n$USAGE"
 		shift
+		;;
+	-q|--quiet)
+		shift
+		QUIET=1
 		;;
 	--*)
 		die "Unknown option $1\n$USAGE"
@@ -56,11 +72,11 @@ dir=$(mktemp -d -t git-ipfs-rehost-XXXXXX)
 tohost="$dir/tohost"
 repo="$dir/tohost/$name"
 
-echo
-echo "Rehosting: $url"
-echo
+print
+print "Rehosting: $url"
+print
 
-git clone --bare "$url" "$repo" || die "Could not clone '$url'"
+git clone --bare "$url" "$repo" $(quiet) || die "Could not clone '$url'"
 
 cd "$repo" || die "Could not cd into '$repo'"
 
@@ -75,7 +91,7 @@ then
 		    "It should start with '/ipfs/'"
 		;;
 	esac
-	echo "Getting packs from $EXISTING..."
+	print "Getting packs from $EXISTING..."
 	ipfs ls "$EXISTING/objects/pack" >"$tohost/ls_existing_$name.log" ||
 		die "Could not ipfs ls '$EXISTING/objects/pack'"
 	while read phash psize pname
@@ -102,20 +118,20 @@ if [ "$UNPACK" = 1 ]
 then
 	if ls objects/pack/*.pack >/dev/null 2>&1
 	then
-		echo "Unpacking..."
+		print "Unpacking..."
 		mv objects/pack/*.pack . || die "Could not move packs"
 
 		# Unfortunately some shells like dash don't perform globing
 		# after "<", so "git unpack-objects < *.pack" doesn't work.
-		cat *.pack | git unpack-objects || die "Could not unpack packs"
+		cat *.pack | git unpack-objects $(quiet) || die "Could not unpack packs"
 
 		rm -f *.pack || die "Could not remove packs"
 		rm -f objects/pack/*.idx || die "Could not remove pack indexes"
 	fi
 else
-	echo "Packing..."
+	print "Packing..."
 	# This should pack and remove unwanted and unneeded objects
-	git gc || die "Could not garbage collect"
+	git gc $(quiet) || die "Could not garbage collect"
 
 	# Create .keep files so that the .pack files will be kept
 	for pack in objects/pack/*.pack
@@ -125,20 +141,24 @@ else
 	done
 fi
 
-echo "Updating server info..."
+print "Updating server info..."
 git update-server-info || die "Could not update-server-info"
 
-echo "Adding to IPFS..."
+print "Adding to IPFS..."
 ipfs add -q -r "$tohost" >"$tohost/add_$name.log" || die "Could not add '$tohost'"
 hash=$(tail -n1 "$tohost/add_$name.log")
 
-echo "done."
-echo
-echo "Repo rehosted at:"
-echo
-echo "  https://ipfs.io/ipfs/$hash/$name"
-echo
-echo "You can clone it with:"
-echo
-echo "  git clone https://ipfs.io/ipfs/$hash/$name"
-echo
+print "done."
+print
+print "Repo rehosted at:"
+print
+print "  https://ipfs.io/ipfs/$hash/$name"
+print
+print "You can clone it with:"
+print
+print "  git clone https://ipfs.io/ipfs/$hash/$name"
+print
+
+if [ ! -z "$QUIET" ]; then
+	echo "$hash"
+fi
