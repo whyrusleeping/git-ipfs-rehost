@@ -184,8 +184,6 @@ print "  git clone https://ipfs.io/ipns/$ipns/$name"
 fi
 print
 
-
-
 if [ ! -z "$QUIET" ]; then
 	if [ ! -z "$KEY" ]; then
 		echo "/ipns/$ipns"
